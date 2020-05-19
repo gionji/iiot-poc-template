@@ -21,19 +21,27 @@ class SubHandler(object):
     """
 
     def event_notification(self, event):
-        print("New event recived: ", event.get_event_props_as_fields_dict()['MyNumericProperty'].Value)
         message = {
             "data": {
-                "value": event.get_event_props_as_fields_dict()['MyNumericProperty'].Value
+                "panelVoltage": event.get_event_props_as_fields_dict()['panelVoltage'].Value,
+                "panelCurrent": event.get_event_props_as_fields_dict()['panelCurrent'].Value,
+                "batteryVoltage": event.get_event_props_as_fields_dict()['batteryVoltage'].Value,
+                "batteryCurrent": event.get_event_props_as_fields_dict()['batteryCurrent'].Value,
+                "loadVoltage": event.get_event_props_as_fields_dict()['loadVoltage'].Value,
+                "loadCurrent": event.get_event_props_as_fields_dict()['loadCurrent'].Value,
+                "inPower": event.get_event_props_as_fields_dict()['inPower'].Value,
+                "outPower": event.get_event_props_as_fields_dict()['outPower'].Value,
+                "batteryStatus": event.get_event_props_as_fields_dict()['batteryStatus'].Value,
+                "batteryCapacity": event.get_event_props_as_fields_dict()['batteryCapacity'].Value,
+                "batteryTemperature": event.get_event_props_as_fields_dict()['batteryTemperature'].Value,
             }
         }
-        mqtt_client.publish('/data', json.dumps(message))
+        mqtt_client.publish('/sensors', json.dumps(message))
 
 
 def mqtt_connection():
     global mqtt_client
-    mqtt_client = LocalClient('opc-client', 'localhost', 1883)
-
+    mqtt_client = LocalClient('sensor-opc_ua', 'localhost', 1883)
     mqtt_client.run()
 
 

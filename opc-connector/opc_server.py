@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # The custom event object automatically will have members from its parent (BaseEventType)
     eventType = server.create_custom_event_type(
                     idx,
-                    'ChargeControllerDataReady',
+                    'ChargeControllerDataEvent',
                     ua.ObjectIds.BaseEventType,
                     [
                         ('panelVoltage',       ua.VariantType.Float),
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         while True:
             time.sleep(1)
             data = chargeController.readAllData()
-            myEventGenerator.event.Message           = ua.LocalizedText("ChargeControllerDataReady %d" % count)
+            myEventGenerator.event.Message           = ua.LocalizedText("ChargeControllerDataEvent %d" % count)
             myEventGenerator.event.Severity          = count
 
             myEventGenerator.event.panelVoltage       = data['panelVoltage']
