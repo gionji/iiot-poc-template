@@ -5,7 +5,7 @@ import threading
 import queue
 
 
-class LocalClient(threading.Thread):
+class MqttLocalClient(threading.Thread):
 
     def __init__(self, client_id=None, host='localhost', port=1883, subscription_paths=None):
         threading.Thread.__init__(self)
@@ -28,7 +28,8 @@ class LocalClient(threading.Thread):
         self.client.loop_forever()
 
     def on_message(self, client, obj, msg):
-        self.message_queue.put(msg)
+        if msg != None:
+            self.message_queue.put(msg)
 
     def subscribe_all(self, subscription_paths=None, qos=1):
         if subscription_paths is None:

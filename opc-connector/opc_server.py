@@ -15,33 +15,10 @@ except ImportError:
 
 from opcua import ua, Server
 
+import EpeverChargeController as cc
 
-def getGetChargeControllerData():
-    global data
-    data = dict()
 
-    ## Read Charge Controller Data
-    data = chargeController.readAll()
-
-    ## Read Irradiation data
-    try:
-        data['irradiation']      = sensors.getIrradiation()
-    except Exception as e:
-        data['irradiation']      = None
-        print( e )
-
-    ## Read currents
-    try:
-        data['plug_1_current']   = currentMonitor.getCurrentPlug1()
-        data['plug_2_current']   = currentMonitor.getCurrentPlug2()
-        data['inverter_current'] = currentMonitor.getCurrentInverter()
-    except Exception as e:
-        data['plug_1_current']   = None
-        data['plug_2_current']   = None
-        data['inverter_current'] = None
-        print( e )
-
-    return data
+DUMMY_DATA = True
 
 
 if __name__ == "__main__":
@@ -61,29 +38,42 @@ if __name__ == "__main__":
     objects = server.get_objects_node()
 
     # populating our address space
-    myobj = objects.add_object(idx, "MyObject")
+    epeverObject = objects.add_object(idx, "EpeverObject")
+
+    # creating my machinery objects
+    chargeController = cc.EpeverChargeController(produce_dummy_data = DUMMY_DATA)
 
     ### Creating a custom event: Approach 1
     # The custom event object automatically will have members from its parent (BaseEventType)
-    etype = server.create_custom_event_type(
+    eventType = server.create_custom_event_type(
                     idx,
-                    'MyFirstEvent',
+                    'ChargeControllerDataReady',
                     ua.ObjectIds.BaseEventType,
                     [
-                        ('MyNumericProperty', ua.VariantType.Float),
-                        ('MyStringProperty',  ua.VariantType.String)
+                        ('panelVoltage',       ua.VariantType.Float),
+                        ('panelCurrent',       ua.VariantType.Float),
+                        ('batteryVoltage',     ua.VariantType.Float),
+                        ('batteryCurrent',     ua.VariantType.Float),
+                        ('loadVoltage',        ua.VariantType.Float),
+                        ('loadCurrent',        ua.VariantType.Float),
+                        ('inPower',            ua.VariantType.Float),
+                        ('outPower',           ua.VariantType.Float),
+                        ('batteryStatus',      ua.VariantType.String),
+                        ('batteryTemperature', ua.VariantType.Float),
+                        ('batteryCapacity',    ua.VariantType.Float),
                     ]
                 )
 
-    myevgen = server.get_event_generator(etype, myobj)
+    myEventGenerator = server.get_event_generator(eventType, epeverObject)
 
-
+'''
     ### Creating a custom event: Approach 2
     custom_etype = server.nodes.base_event_type.add_object_type(2, 'MySecondEvent')
     custom_etype.add_property(2, 'MyIntProperty' , ua.Variant(0   , ua.VariantType.Int32   ))
     custom_etype.add_property(2, 'MyBoolProperty', ua.Variant(True, ua.VariantType.Boolean ))
 
     mysecondevgen = server.get_event_generator(custom_etype, myobj)
+'''
 
     # starting!
     server.start()
@@ -93,13 +83,25 @@ if __name__ == "__main__":
         import time
         count = 0
         while True:
-            time.sleep(5)
-            myevgen.event.Message           = ua.LocalizedText("MyFirstEvent %d" % count)
-            myevgen.event.Severity          = count
-            myevgen.event.MyNumericProperty = count
-            myevgen.event.MyStringProperty  = "Property " + str(count)
-            myevgen.trigger()
-            mysecondevgen.trigger(message="MySecondEvent %d" % count)
+            time.sleep(1)
+            data = chargeController.readAllData()
+            myEventGenerator.event.Message           = ua.LocalizedText("ChargeControllerDataReady %d" % count)
+            myEventGenerator.event.Severity          = count
+
+            myEventGenerator.event.panelVoltage       = data['panelVoltage']
+            myEventGenerator.event.panelCurrent       = data['panelCurrent']
+            myEventGenerator.event.batteryVoltage     = data['batteryVoltage']
+            myEventGenerator.event.batteryCurrent     = data['batteryCurrent']
+            myEventGenerator.event.loadVoltage        = data['loadVoltage']
+            myEventGenerator.event.loadCurrent        = data['loadCurrent']
+            myEventGenerator.event.inPower            = data['inPower']
+            myEventGenerator.event.outPower           = data['outPower']
+            myEventGenerator.event.batteryStatus      = data['batteryStatus']
+            myEventGenerator.event.batteryCapacity    = data['batteryCapacity']
+            myEventGenerator.event.batteryTemperature = data['batteryTemperature']
+
+            myEventGenerator.trigger()
+            #mysecondevgen.trigger(message="MySecondEvent %d" % count)
             count += 1
 
         embed()

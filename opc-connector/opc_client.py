@@ -32,7 +32,7 @@ class SubHandler(object):
 
 def mqtt_connection():
     global mqtt_client
-    mqtt_client = LocalClient('opc-client', 'localhost', 1883)
+    mqtt_client = MqttLocalClient('opc-client', 'localhost', 1883)
 
     mqtt_client.run()
 
