@@ -33,7 +33,7 @@ class EpeverChargeController:
 
     def readAllData(self):
         if self.produce_dummy_data:
-            return __produceDummyData()
+            return self.__produceDummyData()
 
         try:
             print("Connect modbus...")

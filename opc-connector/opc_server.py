@@ -1,6 +1,11 @@
 import sys
 sys.path.insert(0, "..")
 import logging
+import time
+import random
+
+from opcua import ua, Server, uamethod
+import EpeverChargeController as cc
 
 try:
     from IPython import embed
@@ -13,15 +18,30 @@ except ImportError:
         shell = code.InteractiveConsole(vars)
         shell.interact()
 
-from opcua import ua, Server
-
-import EpeverChargeController as cc
-
 
 DUMMY_DATA = True
+LOW_BATTERY_VOLTAGE = 10.0
 
 
-if __name__ == "__main__":
+## OPC methods definition 1
+# method to be exposed through server
+def set_plug_state(parent, variant):
+    ret = False
+    if variant.Value % 2 == 0:
+        ret = True
+    return [ua.Variant(ret, ua.VariantType.Boolean)]
+
+
+# method to be exposed through server
+# uses a decorator to automatically convert to and from variants
+@uamethod
+def set_inverter_state(parent, x, y):
+    print("multiply method call with parameters: ", x, y)
+    return x * y
+
+
+
+def main():
     logging.basicConfig(level=logging.WARN)
     logger = logging.getLogger("opcua.server.internal_subscription")
     logger.setLevel(logging.DEBUG)
@@ -31,80 +51,142 @@ if __name__ == "__main__":
     server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
 
     # setup our own namespace, not really necessary but should as spec
-    uri = "http://examples.freeopcua.github.io"
-    idx = server.register_namespace(uri)
+    server_namespace = "http://examples.freeopcua.github.io"
+    address_space = server.register_namespace( server_namespace )
 
     # get Objects node, this is where we should put our custom stuff
-    objects = server.get_objects_node()
+    objects_node = server.get_objects_node()
 
     # populating our address space
-    epeverObject = objects.add_object(idx, "EpeverObject")
+    ChargeControllerObject = objects_node.add_object(address_space, "ChargeController")
+    RelayBoxObject = objects_node.add_object(address_space, "RelayBox")
 
-    # creating my machinery objects
-    chargeController = cc.EpeverChargeController(produce_dummy_data = DUMMY_DATA)
+    panelVoltage       = ChargeControllerObject.add_variable( address_space, "panelVoltage", 0.0 )
+    panelCurrent       = ChargeControllerObject.add_variable( address_space, "panelCurrent", 0.0 )
+    batteryVoltage     = ChargeControllerObject.add_variable( address_space, "batteryVoltage", 0.0 )
+    batteryCurrent     = ChargeControllerObject.add_variable( address_space, "batteryCurrent", 0.0 )
+    loadVoltage        = ChargeControllerObject.add_variable( address_space, "loadVoltage", 0.0 )
+    loadCurrent        = ChargeControllerObject.add_variable( address_space, "loadCurrent", 0.0 )
+    inPower            = ChargeControllerObject.add_variable( address_space, "inPower", 0.0 )
+    outPower           = ChargeControllerObject.add_variable( address_space, "outPower", 0.0 )
+    batteryStatus      = ChargeControllerObject.add_variable( address_space, "batteryStatus", "" )
+    batteryCapacity    = ChargeControllerObject.add_variable( address_space, "batteryCapacity", 0.0 )
+    batteryTemperature = ChargeControllerObject.add_variable( address_space, "batteryTemperature", 0.0 )
 
-    ### Creating a custom event: Approach 1
-    # The custom event object automatically will have members from its parent (BaseEventType)
+    ## To make them writable by the clients
+    """
+    panelVoltage.set_writable()
+    panelCurrent.set_writable()
+    batteryCurrent.set_writable()
+    batteryVoltage.set_writable()
+    loadVoltage.set_writable()
+    loadCurrent.set_writable()
+    inPower.set_writable()
+    outPower.set_writable()
+    batteryStatus.set_writable()
+    batteryCapacity.set_writable()
+    batteryTemperature.set_writable()
+    """
+
+    ### Creating a custom EVENT
     eventType = server.create_custom_event_type(
-                    idx,
-                    'ChargeControllerDataEvent',
+                    address_space,
+                    'LowBatteryEvent',
                     ua.ObjectIds.BaseEventType,
                     [
-                        ('panelVoltage',       ua.VariantType.Float),
-                        ('panelCurrent',       ua.VariantType.Float),
-                        ('batteryVoltage',     ua.VariantType.Float),
-                        ('batteryCurrent',     ua.VariantType.Float),
-                        ('loadVoltage',        ua.VariantType.Float),
-                        ('loadCurrent',        ua.VariantType.Float),
-                        ('inPower',            ua.VariantType.Float),
-                        ('outPower',           ua.VariantType.Float),
-                        ('batteryStatus',      ua.VariantType.String),
-                        ('batteryTemperature', ua.VariantType.Float),
-                        ('batteryCapacity',    ua.VariantType.Float),
+                        ('batteryVoltage', ua.VariantType.Float),
+                        ('outputsEnabled', ua.VariantType.Boolean),
                     ]
                 )
+    myEventGenerator = server.get_event_generator(eventType, ChargeControllerObject)
 
-    myEventGenerator = server.get_event_generator(eventType, epeverObject)
+    ##creating an array
+    plug_A_current_array = ChargeControllerObject.add_variable(address_space, "plug_A_current_array", [6.7, 7.9])
+    # the variable could be hard typed
+    plug_B_current_array = ChargeControllerObject.add_variable(address_space, "plug_B_current_array", ua.Variant([], ua.VariantType.Float))
 
-'''
-    ### Creating a custom event: Approach 2
-    custom_etype = server.nodes.base_event_type.add_object_type(2, 'MySecondEvent')
-    custom_etype.add_property(2, 'MyIntProperty' , ua.Variant(0   , ua.VariantType.Int32   ))
-    custom_etype.add_property(2, 'MyBoolProperty', ua.Variant(True, ua.VariantType.Boolean ))
+    ## creating  a folder
+    myfolder = objects_node.add_folder(address_space, "myFolder")
 
-    mysecondevgen = server.get_event_generator(custom_etype, myobj)
-'''
+    ## creating a property
+    prop_charge_controller_producer = ChargeControllerObject.add_property(address_space, "charge_controller_producer", "Epever")
+    prop_charge_controller_model = ChargeControllerObject.add_property(address_space, "charge_controller_model", "Tracer 2210A MPPT")
+    prop_panel = ChargeControllerObject.add_property(address_space, "panel_info",   "12V 100 W")
+    prop_battery = ChargeControllerObject.add_property(address_space, "battery_info", "Bosch 12V")
+
+    ## Two different methods definitions
+    # First
+    plugs_control_node = RelayBoxObject.add_method(address_space, "set_plug_state", set_plug_state, [ua.VariantType.Boolean], [ua.VariantType.Boolean])
+
+    # Second
+    inarg = ua.Argument()
+    inarg.Name = "inverter_state"
+    inarg.DataType = ua.NodeId(ua.ObjectIds.Boolean)
+    inarg.ValueRank = -1
+    inarg.ArrayDimensions = []
+    inarg.Description = ua.LocalizedText("Boolean inverter state")
+    outarg = ua.Argument()
+    outarg.Name = "Result"
+    outarg.DataType = ua.NodeId(ua.ObjectIds.Boolean)
+    outarg.ValueRank = -1
+    outarg.ArrayDimensions = []
+    outarg.Description = ua.LocalizedText("Final Inverter State")
+
+    inverter_control_node = RelayBoxObject.add_method(address_space, "set_inverter_state", set_inverter_state, [inarg], [outarg])
+
 
     # starting!
     server.start()
+    print( "Server starting ...")
+
+    # creating my machinery objects
+    chargeController = cc.EpeverChargeController(produce_dummy_data = DUMMY_DATA)
+    outputsEnabled = True
 
     try:
-        # time.sleep is here just because we want to see events in UaExpert
-        import time
-        count = 0
+
         while True:
             time.sleep(1)
             data = chargeController.readAllData()
-            myEventGenerator.event.Message           = ua.LocalizedText("ChargeControllerDataEvent %d" % count)
-            myEventGenerator.event.Severity          = count
 
-            myEventGenerator.event.panelVoltage       = data['panelVoltage']
-            myEventGenerator.event.panelCurrent       = data['panelCurrent']
-            myEventGenerator.event.batteryVoltage     = data['batteryVoltage']
-            myEventGenerator.event.batteryCurrent     = data['batteryCurrent']
-            myEventGenerator.event.loadVoltage        = data['loadVoltage']
-            myEventGenerator.event.loadCurrent        = data['loadCurrent']
-            myEventGenerator.event.inPower            = data['inPower']
-            myEventGenerator.event.outPower           = data['outPower']
-            myEventGenerator.event.batteryStatus      = data['batteryStatus']
-            myEventGenerator.event.batteryCapacity    = data['batteryCapacity']
-            myEventGenerator.event.batteryTemperature = data['batteryTemperature']
+            panelVoltage.set_value( data['panelVoltage'] )
+            panelCurrent.set_value( data['panelCurrent'] )
+            batteryVoltage.set_value( data['batteryVoltage'] )
+            batteryCurrent.set_value( data['batteryCurrent'] )
+            loadVoltage.set_value( data['loadVoltage'] )
+            loadCurrent.set_value( data['loadCurrent'] )
+            inPower.set_value( data['inPower'] )
+            outPower.set_value( data['outPower'] )
+            batteryStatus.set_value( data['batteryStatus'] )
+            batteryCapacity.set_value( data['batteryCapacity'] )
+            batteryTemperature.set_value( data['batteryTemperature'] )
 
-            myEventGenerator.trigger()
-            #mysecondevgen.trigger(message="MySecondEvent %d" % count)
-            count += 1
+            if data['batteryVoltage'] < LOW_BATTERY_VOLTAGE and outputsEnabled:
+                outputsEnabled = False;
+                myEventGenerator.event.Message = ua.LocalizedText("Battery Voltage is too low. Outputs will be disconnected")
+                myEventGenerator.event.batteryVoltage =  ua.Variant(float(data['panelVoltage']), ua.VariantType.Float)
+                myEventGenerator.event.outputsEnabled =  ua.Variant( outputsEnabled , ua.VariantType.Boolean)
+                myEventGenerator.event.Severity =  ua.Variant( 1 , ua.VariantType.Int32)
+                myEventGenerator.trigger()
+            elif data['batteryVoltage'] > LOW_BATTERY_VOLTAGE and not outputsEnabled:
+                outputsEnabled = True;
+                myEventGenerator.event.Message = ua.LocalizedText("Battery Voltage is normal. Outputs will be activated")
+                myEventGenerator.event.batteryVoltage =  ua.Variant(float(data['panelVoltage']), ua.VariantType.Float)
+                myEventGenerator.event.outputsEnabled =  ua.Variant( outputsEnabled , ua.VariantType.Boolean)
+                myEventGenerator.event.Severity =  ua.Variant( 1 , ua.VariantType.Int32)
+                myEventGenerator.trigger()
+
+            ## update array variables
+            burst = [random.random() for _ in range(1024)]
+            plug_A_current_array.set_value(burst)
+            plug_B_current_array.set_value(burst)
 
         embed()
     finally:
         # close connection, remove subcsriptions, etc
         server.stop()
+
+
+
+if __name__ == "__main__":
+    main()
