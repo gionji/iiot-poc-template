@@ -20,6 +20,9 @@ def database_init():
 def add_data():
     return 0
 
+def get_dump():
+    return 0
+
 
 def main():
     mqtt_client = MqttLocalClient(
