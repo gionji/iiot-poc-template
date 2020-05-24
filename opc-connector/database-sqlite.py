@@ -35,7 +35,7 @@ def create_tables(conn):
                                         loadVoltage          real,
                                         loadCurrent          real,
                                         powerInput           real,
-                                        powerOoutput          real,
+                                        powerOutput          real,
                                         batteryStatus         real,
                                         batteryCapacity       real,
                                         batteryTemperature    real,
@@ -140,16 +140,16 @@ def get_last_sensors_data(conn):
 
     if result != None:
         data['panelVoltage'] = result[ 1 ]
-        data['panel_current'] = result[ 2 ]
-        data['battery_voltage'] = result[ 3 ]
-        data['battery_current'] = result[ 4]
-        data['load_voltage'] = result[5]
-        data['load_current'] = result[6]
-        data['power_input'] = result[7]
-        data['power_output'] = result[8]
-        data['battery_status'] = result[ 9]
-        data['battery_capacity'] = result[ 10]
-        data['battery_temperature'] = result[ 11]
+        data['panelCurrent'] = result[ 2 ]
+        data['batteryVoltage'] = result[ 3 ]
+        data['batterCurrent'] = result[ 4]
+        data['loadVoltage'] = result[5]
+        data['loadCurrent'] = result[6]
+        data['powerInput'] = result[7]
+        data['powerOutput'] = result[8]
+        data['batteryStatus'] = result[ 9]
+        data['batteryCapacity'] = result[ 10]
+        data['batteryTemperature'] = result[ 11]
         data['time'] = result[12]
     else:
         data = None
@@ -181,6 +181,7 @@ def main():
     while True:
         # Waiting for a new message in the queue
         message = mqtt_client.message_queue.get()
+
         topic        = message.topic
         payload      = message.payload
         json_payload = json.loads(payload)
