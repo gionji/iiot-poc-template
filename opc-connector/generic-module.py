@@ -1,5 +1,5 @@
 import json
-from services.publisher import LocalClient
+from services.publisher import MqttLocalClient
 
 
 def packOutputMessage(output_name ,output_value):
@@ -19,13 +19,11 @@ def data_manipulation( value ):
 
 def main():
     mqtt_client = MqttLocalClient(
-                                  client_id          = "generic-client",
-                                  host               = "localhost",
-                                  port               = 1883,
+                                  client_id          = "telemetry-losant",
+                                  host               = IIoT.MQTT_HOST,
+                                  port               = IIoT.MQTT_PORT,
                                   subscription_paths = [
-                                                        '/persistence',
-                                                        '/sensors',
-                                                        '/data'
+                                                        IIoT.MqttChannels.telemetry,
                                                        ]
                                  )
     mqtt_client.start()
@@ -47,7 +45,7 @@ def main():
 
         # Publish data
         message = packOutputMessage(output_value)
-        mqtt_client.publish('/data', json.dumps(message))
+        mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
 
 
 if __name__ == "__main__":

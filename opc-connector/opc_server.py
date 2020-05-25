@@ -3,7 +3,6 @@ sys.path.insert(0, "..")
 import logging
 import time
 import random
-
 from opcua import ua, Server, uamethod
 import EpeverChargeController as cc
 
@@ -59,7 +58,7 @@ def main():
 
     # populating our address space
     ChargeControllerObject = objects_node.add_object(address_space, "ChargeController")
-    RelayBoxObject = objects_node.add_object(address_space, "RelayBox")
+    RelayBoxObject         = objects_node.add_object(address_space, "RelayBox")
 
     panelVoltage       = ChargeControllerObject.add_variable( address_space, "panelVoltage", 0.0 )
     panelCurrent       = ChargeControllerObject.add_variable( address_space, "panelCurrent", 0.0 )
@@ -105,14 +104,11 @@ def main():
     # the variable could be hard typed
     plug_B_current_array = ChargeControllerObject.add_variable(address_space, "plug_B_current_array", ua.Variant([], ua.VariantType.Float))
 
-    ## creating  a folder
-    myfolder = objects_node.add_folder(address_space, "myFolder")
-
     ## creating a property
     prop_charge_controller_producer = ChargeControllerObject.add_property(address_space, "charge_controller_producer", "Epever")
-    prop_charge_controller_model = ChargeControllerObject.add_property(address_space, "charge_controller_model", "Tracer 2210A MPPT")
-    prop_panel = ChargeControllerObject.add_property(address_space, "panel_info",   "12V 100 W")
-    prop_battery = ChargeControllerObject.add_property(address_space, "battery_info", "Bosch 12V")
+    prop_charge_controller_model    = ChargeControllerObject.add_property(address_space, "charge_controller_model", "Tracer 2210A MPPT")
+    prop_panel                      = ChargeControllerObject.add_property(address_space, "panel_info",   "12V 100 W")
+    prop_battery                    = ChargeControllerObject.add_property(address_space, "battery_info", "Bosch 12V")
 
     ## Two different methods definitions
     # First
