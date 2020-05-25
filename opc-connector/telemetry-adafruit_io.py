@@ -1,6 +1,16 @@
 import json
-
 from services.publisher import MqttLocalClient
+from Adafruit_IO import Client, Feed
+
+
+# Set to your Adafruit IO key.
+# Remember, your key is a secret,
+# so make sure not to publish it when you publish this code!
+ADAFRUIT_IO_KEY = 'YOUR_AIO_KEY'
+
+# Set to your Adafruit IO username.
+# (go to https://accounts.adafruit.com to find your username)
+ADAFRUIT_IO_USERNAME = 'YOUR_AIO_USERNAME'
 
 
 def packOutputMessage(output_name ,output_value):
@@ -13,9 +23,8 @@ def packOutputMessage(output_name ,output_value):
     return message
 
 
-def data_manipulation( value ):
-    output_value = input_value * 1
-    return output_value
+## subscibe frome aoi see here:
+#https://github.com/adafruit/Adafruit_IO_Python/blob/master/examples/basics/subscribe.py
 
 
 def main():
@@ -28,6 +37,13 @@ def main():
                                                        ]
                                  )
     mqtt_client.start()
+
+    # Create an instance of the REST client.
+    aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
+
+    # Create a new feed named 'counter'
+    feed = Feed(name="Counter")
+    response = aio.create_feed(feed)
 
     # Get the data from message_queue
     while True:
@@ -42,11 +58,11 @@ def main():
         input_value  = json_payload['data']['value']
 
         # Perform actions
-        output_value = data_manipulation( input_value )
+        aio.send_data( input_name, input_value )
 
         # Publish data
         message = packOutputMessage(output_value)
-        mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
+        mqtt_client.publish('/data', json.dumps(message))
 
 
 if __name__ == "__main__":
