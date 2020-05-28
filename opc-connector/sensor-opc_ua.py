@@ -5,6 +5,8 @@ from time import sleep
 
 from services.publisher import MqttLocalClient
 
+import TemplateCommon as IIoT
+
 mqtt_client = None
 
 sys.path.insert(0, "..")
@@ -60,7 +62,7 @@ class SubHandler(object):
     def datachange_notification(self, node, val, data):
         var_name = get_variable_name_by_node(node)
         message = packOutputMessage(var_name ,val)
-        mqtt_client.publish('/sensors', json.dumps(message))
+        mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
 
     def event_notification(self, event):
         print("# EVENT # Python: New event", event.Message)
@@ -124,7 +126,7 @@ if __name__ == "__main__":
         sub = client.create_subscription(100, msclt)
         for var in subscribed_variables:
             handle = sub.subscribe_data_change(var)
-        #handle = sub.subscribe_events(obj, myevent)
+        handle = sub.subscribe_events(obj, myevent)
 
         while True:
             sleep(1)

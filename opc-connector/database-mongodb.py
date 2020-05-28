@@ -2,7 +2,7 @@ import json
 from services.publisher import MqttLocalClient
 from pymongo import MongoClient
 import datetime
-
+import TemplateCommon as IIoT
 
 
 def packOutputMessage(output_name ,output_value):
@@ -36,6 +36,7 @@ def database_init():
 
 def add_data(collection, document):
     ret = collection.insert_one( document )
+    print("add " + str(document))
     return ret
 
 def get_values_in_time_range( collection, key, start_time, end_time ):
@@ -86,6 +87,8 @@ def main():
         input_name   = json_payload['data']['name']
         input_value  = json_payload['data']['value']
 
+        print(message)
+
         # Perform actions
         obj = {
                 input_name : input_value,
@@ -97,9 +100,7 @@ def main():
         elif input_name in events:
             add_data( events_collection , obj )
 
-        # Publish data
-        message = packOutputMessage(output_value)
-        mqtt_client.publish('/data', json.dumps(message))
+
 
 
 if __name__ == "__main__":
