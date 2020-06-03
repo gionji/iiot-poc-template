@@ -65,7 +65,9 @@ class SubHandler(object):
         mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
 
     def event_notification(self, event):
-        print("# EVENT # Python: New event", event.Message)
+        message = packOutputMessage('event' , str(event.Message))
+        mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
+        #print("# EVENT # Python: New event", event.Message)
 
 
 def mqtt_connection():

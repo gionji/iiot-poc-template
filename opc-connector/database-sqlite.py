@@ -3,6 +3,7 @@ from services.publisher import MqttLocalClient
 import datetime
 import time
 import TemplateCommon as IIoT
+import sqlite3
 
 
 DATABASE_PATH = r"./database.sqlite"
@@ -22,7 +23,6 @@ def create_connection(db_file):
         return conn
     except Error as e:
         print(e)
-
     return conn
 
 def create_tables(conn):
@@ -34,11 +34,18 @@ def create_tables(conn):
                                         batteryCurrent        real,
                                         loadVoltage           real,
                                         loadCurrent           real,
-                                        powerInput            real,
-                                        powerOutput           real,
+                                        inPower            real,
+                                        outPower           real,
                                         batteryStatus         real,
                                         batteryCapacity       real,
                                         batteryTemperature    real,
+                                        time                  timestamp NOT NULL
+                                    ); """
+
+    sql_create_table_sensors_2 = """ CREATE TABLE IF NOT EXISTS sensors2 (
+                                        id integer            PRIMARY KEY AUTOINCREMENT,
+                                        sensor                text,
+                                        value                 real,
                                         time                  timestamp NOT NULL
                                     ); """
 
@@ -51,33 +58,35 @@ def create_tables(conn):
     try:
         c = conn.cursor()
         c.execute( sql_create_table_sensors )
-        c.commit()
+        c.execute( sql_create_table_sensors_2 )
+        conn.commit()
     except Error as e:
         print(e)
 
     try:
         c = conn.cursor()
         c.execute( sql_create_table_events )
-        c.commit()
+        conn.commit()
     except Error as e:
         print(e)
 
 def add_sensors_data(conn, data):
-
-    data = dictToTuple
-
-    data = data + (datetime.datetime.now(), )
+    data = dictToTuple(data)
+    data = data + ( datetime.datetime.now(), )
+    #data = (data, datetime.datetime.now() )
 
     sql = ''' INSERT INTO sensors( panelVoltage,
                                    panelCurrent,
                                    batteryVoltage,
                                    batteryCurrent,
                                    loadVoltage,
+
                                    loadCurrent,
                                    inPower,
                                    outPower,
                                    batteryStatus,
                                    batteryCapacity,
+
                                    batteryTemperature,
                                    time
                                 )
@@ -89,6 +98,22 @@ def add_sensors_data(conn, data):
     except Exception as e:
         print(e)
 
+
+def add_sensor_data(conn, sensor, value):
+
+    data = (sensor, value, datetime.datetime.now())
+
+    sql = ''' INSERT INTO sensors2 ( sensor,
+                                   value,
+                                   time
+                                )
+              VALUES( ?,?,? ) '''
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, data)
+        conn.commit()
+    except Exception as e:
+        print(e)
 
 def add_event_data(conn, data):
     data = (data, datetime.datetime.now() )
@@ -145,8 +170,8 @@ def get_last_sensors_data(conn):
         data['batterCurrent'] = result[ 4]
         data['loadVoltage'] = result[5]
         data['loadCurrent'] = result[6]
-        data['powerInput'] = result[7]
-        data['powerOutput'] = result[8]
+        data['inPower'] = result[7]
+        data['outPower'] = result[8]
         data['batteryStatus'] = result[ 9]
         data['batteryCapacity'] = result[ 10]
         data['batteryTemperature'] = result[ 11]
@@ -193,12 +218,15 @@ def main():
         # Perform actions
         if input_name in sensors:
             sensors_data[ input_name ] = input_value
+            add_sensor_data( conn , input_name, input_value)
 
         if input_name in sensors:
             if now - last_data_arrived > 1:
                 add_sensors_data( conn , sensors_data )
+                #:print(sensors_data)
         else:
             add_event_data( conn , input_value )
+            print( input_value )
 
 
 

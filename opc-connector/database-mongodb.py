@@ -1,7 +1,7 @@
 import json
+import datetime
 from services.publisher import MqttLocalClient
 from pymongo import MongoClient
-import datetime
 import TemplateCommon as IIoT
 
 
@@ -31,7 +31,7 @@ sensors = ["panelVoltage",
 events = []
 
 def database_init():
-    client = MongoClient('localhost', 27017)
+    client = MongoClient('127.0.0.1', 27017)
     db     = client.local_mongo_db
     return db
 
@@ -71,10 +71,15 @@ def main():
     mqtt_client.start()
 
     db = database_init()
+
+    print("pippaaaa")
+
     sensors_collection = db.sensors_collection
     events_collection  = db.events_collection
     data_collection    = db.data_collection
 
+
+    print("pippaaaaaaaa")
 
     # Get the data from message_queue
     while True:
