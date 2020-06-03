@@ -33,16 +33,16 @@ def main():
                                   host               = IIoT.MQTT_HOST,
                                   port               = IIoT.MQTT_PORT,
                                   subscription_paths = [
-                                                        IIoT.MqttChannels.telemetry,
+                                                            IIoT.MqttChannels.telemetry,
                                                        ]
                                  )
     mqtt_client.start()
 
     # Create an instance of the REST client.
-    aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
+    aio      = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
 
     # Create a new feed named 'counter'
-    feed = Feed(name="Counter")
+    feed     = Feed(name="Counter")
     response = aio.create_feed(feed)
 
     # Get the data from message_queue

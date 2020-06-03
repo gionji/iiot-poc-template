@@ -11,6 +11,7 @@ class LosantClient(threading.Thread):
         self.my_app_access_key    = my_app_access_key
         self.my_app_access_secret = my_app_access_secret
         self.message_queue        = queue.Queue()
+        
         # Construct Losant device
         self.device = Device(self.my_device_id,
                         self.my_app_access_key,
@@ -26,13 +27,15 @@ class LosantClient(threading.Thread):
         print("Sending Device State")
         device.send_state( {str(name) : value} )
 
-    def on_comm
-    and(device, command):
+    def on_command(device, command):
         print(command["name"] + " command received.")
 
         if command["name"] == "toggle":
             print("Do something")
 
+
+def callbackCane():
+    return 27
 
 
 MY_DEVICE_ID         = ''

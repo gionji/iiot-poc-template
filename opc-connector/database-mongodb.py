@@ -14,6 +14,7 @@ def packOutputMessage(output_name ,output_value):
     }
     return message
 
+
 sensors = ["panelVoltage",
             "panelCurrent",
             "batteryVoltage",

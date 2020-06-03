@@ -28,21 +28,21 @@ def create_connection(db_file):
 def create_tables(conn):
     sql_create_table_sensors = """ CREATE TABLE IF NOT EXISTS sensors (
                                         id integer            PRIMARY KEY AUTOINCREMENT,
-                                        panelVoltage         real,
-                                        panelCurrent         real,
-                                        batteryVoltage       real,
-                                        batteryCurrent       real,
-                                        loadVoltage          real,
-                                        loadCurrent          real,
-                                        powerInput           real,
-                                        powerOutput          real,
+                                        panelVoltage          real,
+                                        panelCurrent          real,
+                                        batteryVoltage        real,
+                                        batteryCurrent        real,
+                                        loadVoltage           real,
+                                        loadCurrent           real,
+                                        powerInput            real,
+                                        powerOutput           real,
                                         batteryStatus         real,
                                         batteryCapacity       real,
                                         batteryTemperature    real,
                                         time                  timestamp NOT NULL
                                     ); """
 
-    sql_create_table_events = """ CREATE TABLE IF NOT EXISTS events (
+    sql_create_table_events = """ CREATE TABLE IF NOT EXISTS  events (
                                         id integer            PRIMARY KEY AUTOINCREMENT,
                                         event_message         text,
                                         time                  timestamp NOT NULL
@@ -193,7 +193,6 @@ def main():
         # Perform actions
         if input_name in sensors:
             sensors_data[ input_name ] = input_value
-
 
         if input_name in sensors:
             if now - last_data_arrived > 1:
