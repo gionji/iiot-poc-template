@@ -2,14 +2,20 @@ import json
 from common.services.publisher import MqttLocalClient
 import common.IIoT as IIoT
 
+# https://docs.edgeimpulse.com/docs/running-your-impulse-locally
+# https://docs.edgeimpulse.com/reference#data-acquisition-format
+# https://docs.edgeimpulse.com/docs/porting-guide
+
 
 MQTT_CLIENT_ID           = "genric"
 SUBSCRIBED_MQTT_CHANNELS = [
                                #IIoT.MqttChannels.persist,
-                           ]
+                       ]
 
 def data_manipulation( value ):
     return value
+
+
 
 
 def main():

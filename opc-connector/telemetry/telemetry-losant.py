@@ -1,6 +1,14 @@
 import json
-from services.publisher import MqttLocalClient
+from common.services.publisher import MqttLocalClient
+import common.IIoT as IIoT
 from losantmqtt import Device
+
+
+MQTT_CLIENT_ID           = "telemetry-losant"
+SUBSCRIBED_MQTT_CHANNELS = [
+                               IIoT.MqttChannels.telemetry,
+                           ]
+
 
 
 class LosantClient(threading.Thread):
@@ -11,7 +19,7 @@ class LosantClient(threading.Thread):
         self.my_app_access_key    = my_app_access_key
         self.my_app_access_secret = my_app_access_secret
         self.message_queue        = queue.Queue()
-        
+
         # Construct Losant device
         self.device = Device(self.my_device_id,
                         self.my_app_access_key,
@@ -35,14 +43,14 @@ class LosantClient(threading.Thread):
 
 
 def callbackCane():
-    return 27
+    return "TO_DO"
 
 
 MY_DEVICE_ID         = ''
 MY_APP_ACCESS_KEY    = ''
 MY_APP_ACCESS_SECRET = ''
 
-def packOutputMessage(output_name ,output_value):
+def packOutputMessage( output_name ,output_value ):
     message = {
         "data": {
             "name" : output_name,
@@ -55,11 +63,11 @@ def packOutputMessage(output_name ,output_value):
 
 def main():
     mqtt_client = MqttLocalClient(
-                                  client_id          = "telemetry-losant",
+                                  client_id          = MQTT_CLIENT_ID,
                                   host               = IIoT.MQTT_HOST,
                                   port               = IIoT.MQTT_PORT,
                                   subscription_paths = [
-                                                        IIoT.MqttChannels.telemetry,
+                                                        SUBSCRIBED_MQTT_CHANNELS,
                                                        ]
                                  )
     mqtt_client.start()

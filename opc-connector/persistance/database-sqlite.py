@@ -1,14 +1,26 @@
+import sys
+sys.path.insert(0, "..") # this allows to load upper level imports
 import json
-from services.publisher import MqttLocalClient
+import threading
+from time import sleep
+from opcua import Client, ua
+from common.services.publisher import MqttLocalClient
+import common.IIoT as IIoT
 import datetime
-import time
-import TemplateCommon as IIoT
 import sqlite3
+import time
 
 
-DATABASE_PATH = r"./database.sqlite"
 
-sensors = IIoT.OPC_SENSORS
+import common.MyCommons as Commons
+
+DATABASE_PATH            = r"./database.sqlite"
+MQTT_CLIENT_ID           = "database-sqlite"
+SUBSCRIBED_MQTT_CHANNELS = [
+                               IIoT.MqttChannels.persist,
+                           ]
+
+sensors = Commons.OPC_SENSORS
 events  = []
 
 def database_init():
@@ -42,7 +54,7 @@ def create_tables(conn):
                                         time                  timestamp NOT NULL
                                     ); """
 
-    sql_create_table_sensors_2 = """ CREATE TABLE IF NOT EXISTS sensors2 (
+    sql_create_table_single_sensors = """ CREATE TABLE IF NOT EXISTS single_sensors (
                                         id integer            PRIMARY KEY AUTOINCREMENT,
                                         sensor                text,
                                         value                 real,
@@ -58,7 +70,7 @@ def create_tables(conn):
     try:
         c = conn.cursor()
         c.execute( sql_create_table_sensors )
-        c.execute( sql_create_table_sensors_2 )
+        c.execute( sql_create_table_single_sensors )
         conn.commit()
     except Error as e:
         print(e)
@@ -103,7 +115,7 @@ def add_sensor_data(conn, sensor, value):
 
     data = (sensor, value, datetime.datetime.now())
 
-    sql = ''' INSERT INTO sensors2 ( sensor,
+    sql = ''' INSERT INTO single_sensors ( sensor,
                                    value,
                                    time
                                 )
@@ -118,7 +130,7 @@ def add_sensor_data(conn, sensor, value):
 def add_event_data(conn, data):
     data = (data, datetime.datetime.now() )
 
-    sql = ''' INSERT INTO sensors( event_message
+    sql = ''' INSERT INTO events( event_message,
                                    time
                                     )
               VALUES( ?,? ) '''
@@ -126,7 +138,6 @@ def add_event_data(conn, data):
         cur = conn.cursor()
         cur.execute(sql, data)
         conn.commit()
-        conn.close()
     except Exception as e:
         print(e)
 
@@ -167,7 +178,7 @@ def get_last_sensors_data(conn):
         data['panelVoltage'] = result[ 1 ]
         data['panelCurrent'] = result[ 2 ]
         data['batteryVoltage'] = result[ 3 ]
-        data['batterCurrent'] = result[ 4]
+        data['batteryCurrent'] = result[ 4 ]
         data['loadVoltage'] = result[5]
         data['loadCurrent'] = result[6]
         data['inPower'] = result[7]
@@ -189,19 +200,17 @@ def dump_data(conn, table):
 
 def main():
     mqtt_client = MqttLocalClient(
-                                  client_id          = "database-sqlite",
+                                  client_id          = MQTT_CLIENT_ID,
                                   host               = IIoT.MQTT_HOST,
                                   port               = IIoT.MQTT_PORT,
-                                  subscription_paths = [
-                                                        IIoT.MqttChannels.persist,
-                                                       ]
+                                  subscription_paths = SUBSCRIBED_MQTT_CHANNELS,
                                  )
     mqtt_client.start()
 
     conn = database_init()
 
     sensors_data = dict()
-    last_data_arrived = time.time()
+    last_data_arrived = None
     # Get the data from message_queue
     while True:
         # Waiting for a new message in the queue
@@ -220,13 +229,13 @@ def main():
             sensors_data[ input_name ] = input_value
             add_sensor_data( conn , input_name, input_value)
 
-        if input_name in sensors:
+        if input_name in sensors and last_data_arrived is not None:
             if now - last_data_arrived > 1:
                 add_sensors_data( conn , sensors_data )
                 #:print(sensors_data)
         else:
             add_event_data( conn , input_value )
-            print( input_value )
+            # print( input_value )
 
 
 

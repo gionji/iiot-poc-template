@@ -1,52 +1,23 @@
-import json
 import sys
+sys.path.insert(0, "..") # this allows to load upper level imports
+import json
 import threading
 from time import sleep
+from opcua import Client, ua
+from common.services.publisher import MqttLocalClient
+import common.IIoT as IIoT
 
-from services.publisher import MqttLocalClient
+import common.MyCommons as Commons
 
-import TemplateCommon as IIoT
+OBJECT_NAME = "0:ChargeController"
+VARS_NAMES  = Commons.OPC_SENSORS
 
 mqtt_client = None
 
-sys.path.insert(0, "..")
-
-from opcua import Client, ua
-
-OBJECT_NAME = "0:ChargeController"
-VARS_NAMES = ["panelVoltage",
-            "panelCurrent",
-            "batteryVoltage",
-            "batteryCurrent",
-            "loadVoltage",
-            "loadCurrent",
-            "inPower",
-            "outPower",
-            "batteryStatus",
-            "batteryCapacity",
-            "batteryTemperature",
-            ]
-
-PUBLISH_CHANNELS = ['/sensors']
-
+## this dictionary contains the opc variables we wanto to subscribe
 global subscribed_variables_dict
 
-def browse_recursive(node):
-    for childId in node.get_children():
-        ch = client.get_node(childId)
-        print(ch.get_node_class())
-        if ch.get_node_class() == ua.NodeClass.Object:
-            browse_recursive(ch)
-        elif ch.get_node_class() == ua.NodeClass.Variable:
-            try:
-                print("{bn} has value {val}".format(
-                    bn=ch.get_browse_name(),
-                    val=str(ch.get_value()))
-                )
-            except ua.uaerrors._auto.BadWaitingForInitialData:
-                pass
-
-
+## this method returns the OPC variable name by NodeID and ....
 def get_variable_name_by_node(_node):
     return str( subscribed_variables_dict[str(_node)].split(":")[1] )
 
@@ -62,12 +33,13 @@ class SubHandler(object):
     def datachange_notification(self, node, val, data):
         var_name = get_variable_name_by_node(node)
         message = packOutputMessage(var_name ,val)
+        mqtt_client.publish(IIoT.MqttChannels.sensors, json.dumps(message))
         mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
 
     def event_notification(self, event):
         message = packOutputMessage('event' , str(event.Message))
+        mqtt_client.publish(IIoT.MqttChannels.sensors, json.dumps(message))
         mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
-        #print("# EVENT # Python: New event", event.Message)
 
 
 def mqtt_connection():
@@ -87,13 +59,11 @@ def packOutputMessage(output_name ,output_value):
 
 
 if __name__ == "__main__":
-
     t1 = threading.Thread(target=mqtt_connection)
     t1.daemon = True
     t1.start()
 
     client = Client("opc.tcp://localhost:4840/freeopcua/server/")
-    # client = Client("opc.tcp://admin@localhost:4840/freeopcua/server/") #connect using a user
 
     try:
         client.connect()
