@@ -6,6 +6,8 @@ import random
 from opcua import ua, Server, uamethod
 import EpeverChargeController as cc
 
+import common.MyCommons as Commons
+
 try:
     from IPython import embed
 except ImportError:
@@ -47,30 +49,30 @@ def main():
 
     # setup our server
     server = Server()
-    server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
+    server.set_endpoint( Commons.OPC_ENDPOINT )
 
     # setup our own namespace, not really necessary but should as spec
-    server_namespace = "http://examples.freeopcua.github.io"
-    address_space = server.register_namespace( server_namespace )
+    server_namespace       = Commons.OPC_NAMESPACE
+    address_space          = server.register_namespace( server_namespace )
 
     # get Objects node, this is where we should put our custom stuff
-    objects_node = server.get_objects_node()
+    objects_node           = server.get_objects_node()
 
     # populating our address space
     ChargeControllerObject = objects_node.add_object(address_space, "ChargeController")
     RelayBoxObject         = objects_node.add_object(address_space, "RelayBox")
 
-    panelVoltage       = ChargeControllerObject.add_variable( address_space, "panelVoltage", 0.0 )
-    panelCurrent       = ChargeControllerObject.add_variable( address_space, "panelCurrent", 0.0 )
-    batteryVoltage     = ChargeControllerObject.add_variable( address_space, "batteryVoltage", 0.0 )
-    batteryCurrent     = ChargeControllerObject.add_variable( address_space, "batteryCurrent", 0.0 )
-    loadVoltage        = ChargeControllerObject.add_variable( address_space, "loadVoltage", 0.0 )
-    loadCurrent        = ChargeControllerObject.add_variable( address_space, "loadCurrent", 0.0 )
-    inPower            = ChargeControllerObject.add_variable( address_space, "inPower", 0.0 )
-    outPower           = ChargeControllerObject.add_variable( address_space, "outPower", 0.0 )
-    batteryStatus      = ChargeControllerObject.add_variable( address_space, "batteryStatus", "" )
-    batteryCapacity    = ChargeControllerObject.add_variable( address_space, "batteryCapacity", 0.0 )
-    batteryTemperature = ChargeControllerObject.add_variable( address_space, "batteryTemperature", 0.0 )
+    panelVoltage           = ChargeControllerObject.add_variable( address_space, "panelVoltage", 0.0 )
+    panelCurrent           = ChargeControllerObject.add_variable( address_space, "panelCurrent", 0.0 )
+    batteryVoltage         = ChargeControllerObject.add_variable( address_space, "batteryVoltage", 0.0 )
+    batteryCurrent         = ChargeControllerObject.add_variable( address_space, "batteryCurrent", 0.0 )
+    loadVoltage            = ChargeControllerObject.add_variable( address_space, "loadVoltage", 0.0 )
+    loadCurrent            = ChargeControllerObject.add_variable( address_space, "loadCurrent", 0.0 )
+    inPower                = ChargeControllerObject.add_variable( address_space, "inPower", 0.0 )
+    outPower               = ChargeControllerObject.add_variable( address_space, "outPower", 0.0 )
+    batteryStatus          = ChargeControllerObject.add_variable( address_space, "batteryStatus", "" )
+    batteryCapacity        = ChargeControllerObject.add_variable( address_space, "batteryCapacity", 0.0 )
+    batteryTemperature     = ChargeControllerObject.add_variable( address_space, "batteryTemperature", 0.0 )
 
     ## To make them writable by the clients
     """
