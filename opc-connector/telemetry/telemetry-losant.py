@@ -64,12 +64,6 @@ MY_DEVICE_ID         = ''
 MY_APP_ACCESS_KEY    = ''
 MY_APP_ACCESS_SECRET = ''
 
-MY_DEVICE_ID         = '5ee0e07c5aada0000646678c'
-MY_APP_ACCESS_KEY    = '0a2a14c7-b5f1-4690-bdc2-cec7c7806767'
-MY_APP_ACCESS_SECRET = '8c1e327a4edbcfac3bea399203885e09c1ea1a0c9ddadbe7ae06cf9e8e2878bc'
-
-
-
 def main():
     mqtt_client = MqttLocalClient(
                                   client_id          = MQTT_CLIENT_ID,
