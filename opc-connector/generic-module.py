@@ -2,6 +2,7 @@ import json
 from common.services.publisher import MqttLocalClient
 import common.IIoT as IIoT
 
+import common.MyCommons as Commons
 
 MQTT_CLIENT_ID           = "genric"
 SUBSCRIBED_MQTT_CHANNELS = [

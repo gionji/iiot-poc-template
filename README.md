@@ -6,6 +6,8 @@ pymodbus
 mosquito
 paho-mqtt
 python-etcd (maybe not)
+adafruit-io
+losant-mqtt
 
 ## install mosquito client
 sudo apt-get install mosquitto

@@ -4,7 +4,7 @@ import logging
 import time
 import random
 from opcua import ua, Server, uamethod
-import EpeverChargeController as cc
+import machineries.EpeverChargeController as cc
 
 import common.MyCommons as Commons
 
@@ -59,7 +59,7 @@ def main():
     objects_node           = server.get_objects_node()
 
     # populating our address space
-    ChargeControllerObject = objects_node.add_object(address_space, "ChargeController")
+    ChargeControllerObject = objects_node.add_object(address_space, Commons.MY_OBJECT_NAME)
     RelayBoxObject         = objects_node.add_object(address_space, "RelayBox")
 
     panelVoltage           = ChargeControllerObject.add_variable( address_space, "panelVoltage", 0.0 )
@@ -92,7 +92,7 @@ def main():
     ### Creating a custom EVENT
     eventType = server.create_custom_event_type(
                     address_space,
-                    'LowBatteryEvent',
+                    Commons.MY_FIRST_EVENT_NAME,
                     ua.ObjectIds.BaseEventType,
                     [
                         ('batteryVoltage', ua.VariantType.Float),

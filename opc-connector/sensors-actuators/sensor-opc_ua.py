@@ -9,7 +9,7 @@ import common.IIoT as IIoT
 
 import common.MyCommons as Commons
 
-OBJECT_NAME = "0:ChargeController"
+MY_OBJECT_NAME = "2:ChargeController"
 VARS_NAMES  = Commons.OPC_SENSORS
 
 mqtt_client = None
@@ -35,11 +35,13 @@ class SubHandler(object):
         message = packOutputMessage(var_name ,val)
         mqtt_client.publish(IIoT.MqttChannels.sensors, json.dumps(message))
         mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
+        mqtt_client.publish(IIoT.MqttChannels.telemetry, json.dumps(message))
 
     def event_notification(self, event):
         message = packOutputMessage('event' , str(event.Message))
         mqtt_client.publish(IIoT.MqttChannels.sensors, json.dumps(message))
         mqtt_client.publish(IIoT.MqttChannels.persist, json.dumps(message))
+        mqtt_client.publish(IIoT.MqttChannels.telemetry, json.dumps(message))
 
 
 def mqtt_connection():
@@ -79,18 +81,18 @@ if __name__ == "__main__":
         idx = client.get_namespace_index( server_namespace )
 
         # Now getting a variable node using its browse path
-        obj = root.get_child(["0:Objects", "2:ChargeController"])
+        obj = root.get_child(["0:Objects", "2:" + Commons.MY_OBJECT_NAME])
         print("ChargeController object is: ", obj)
 
         subscribed_variables_dict = dict()
         subscribed_variables   = list()
 
         for var in VARS_NAMES:
-            myvar = root.get_child(["0:Objects", "2:ChargeController", "2:" + str(var)])
+            myvar = root.get_child(["0:Objects", "2:" + Commons.MY_OBJECT_NAME, "2:" + str(var)])
             subscribed_variables.append( myvar )
             subscribed_variables_dict[ str(myvar)  ] = str(myvar.get_browse_name().to_string())
 
-        myevent = root.get_child(["0:Types", "0:EventTypes", "0:BaseEventType", "2:LowBatteryEvent"])
+        myevent = root.get_child(["0:Types", "0:EventTypes", "0:BaseEventType", "2:" + Commons.MY_FIRST_EVENT_NAME])
         print("MyFirstEventType is: ", myevent)
 
         #while (True):

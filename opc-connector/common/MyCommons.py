@@ -1,3 +1,5 @@
+MY_OBJECT_NAME = "ChargeController"
+MY_FIRST_EVENT_NAME = "LowBatteryEvent"
 
 OPC_ENDPOINT  = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
 

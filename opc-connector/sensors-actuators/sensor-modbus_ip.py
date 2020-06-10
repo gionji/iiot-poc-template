@@ -1,9 +1,14 @@
+import sys
+sys.path.insert(0, "..") # this allows to load upper level imports
+from common.services.publisher import MqttLocalClient
+import common.IIoT as IIoT
+import common.MyCommons as Commons
+
 import json
 import sys
 import threading
 from time import sleep
 
-from services.publisher import LocalClient
 import FdsChargeController as FdsCC
 import FdsCommon as fds
 

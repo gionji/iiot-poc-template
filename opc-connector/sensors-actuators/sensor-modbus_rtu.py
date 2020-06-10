@@ -3,8 +3,6 @@ import sys
 import threading
 from time import sleep
 
-from services.publisher import LocalClient
-
 import EpeverChargeController as epever
 
 DELAY = 1.0

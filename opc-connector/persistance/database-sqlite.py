@@ -1,18 +1,17 @@
 import sys
 sys.path.insert(0, "..") # this allows to load upper level imports
+from common.services.publisher import MqttLocalClient
+import common.IIoT as IIoT
+import common.MyCommons as Commons
+
 import json
 import threading
 from time import sleep
 from opcua import Client, ua
-from common.services.publisher import MqttLocalClient
-import common.IIoT as IIoT
 import datetime
 import sqlite3
 import time
 
-
-
-import common.MyCommons as Commons
 
 DATABASE_PATH            = r"./database.sqlite"
 MQTT_CLIENT_ID           = "database-sqlite"
@@ -175,18 +174,18 @@ def get_last_sensors_data(conn):
     result = cursor.fetchone()
 
     if result != None:
-        data['panelVoltage'] = result[ 1 ]
-        data['panelCurrent'] = result[ 2 ]
-        data['batteryVoltage'] = result[ 3 ]
-        data['batteryCurrent'] = result[ 4 ]
-        data['loadVoltage'] = result[5]
-        data['loadCurrent'] = result[6]
-        data['inPower'] = result[7]
-        data['outPower'] = result[8]
-        data['batteryStatus'] = result[ 9]
-        data['batteryCapacity'] = result[ 10]
-        data['batteryTemperature'] = result[ 11]
-        data['time'] = result[12]
+        data['panelVoltage']       = result[ 1  ]
+        data['panelCurrent']       = result[ 2  ]
+        data['batteryVoltage']     = result[ 3  ]
+        data['batteryCurrent']     = result[ 4  ]
+        data['loadVoltage']        = result[ 5  ]
+        data['loadCurrent']        = result[ 6  ]
+        data['inPower']            = result[ 7  ]
+        data['outPower']           = result[ 8  ]
+        data['batteryStatus']      = result[ 9  ]
+        data['batteryCapacity']    = result[ 10 ]
+        data['batteryTemperature'] = result[ 11 ]
+        data['time']               = result[ 12 ]
     else:
         data = None
 
