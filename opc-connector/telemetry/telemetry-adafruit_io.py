@@ -13,9 +13,6 @@ import common.MyCommons as Commons
 ADAFRUIT_IO_KEY      = 'YOUR_AIO_KEY'
 ADAFRUIT_IO_USERNAME = 'YOUR_AIO_USERNAME'
 
-ADAFRUIT_IO_USERNAME = "gionji"
-ADAFRUIT_IO_KEY      = "84f37c4b486645d3b246be43f810543d"
-
 sensors          = Commons.OPC_SENSORS
 SUBSCRIBED_TOPIC = 'message'
 
