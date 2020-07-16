@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from pymongo import MongoClient
 
-
+# this is an abstract clas. Each db implementation has to implement these three methods
 class Persistence(ABC):
 
     @abstractmethod

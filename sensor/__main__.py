@@ -27,5 +27,7 @@ if __name__ == "__main__":
 
     while True:
         value = reader.read()
+
+        # Publish the data
         mqtt_client.publish(IIoT.MqttChannels.sensors, format(reader.key, value, int(datetime.now().timestamp())))
         sleep(10)
