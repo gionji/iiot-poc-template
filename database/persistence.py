@@ -37,9 +37,9 @@ def flatten(doc):
 
 class MongoDB(Persistence, ABC):
 
-    def __init__(self):
+    def __init__(self, host, port):
         super().__init__()
-        self.client = MongoClient('localhost', 27018)
+        self.client = MongoClient(host=host, port=port)
         self.db = self.client.local_mongo_db
         self.collections = dict()
 
