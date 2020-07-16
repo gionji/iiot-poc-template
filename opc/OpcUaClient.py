@@ -1,37 +1,40 @@
 import json
+from abc import abstractmethod, ABC
+
 from threading import Thread
 import datetime
 
 from opcua import Client
 
-from libs.utils import IIoT
 from libs.utils.IIoT import packOutputMessage
+from opc.config import OPC_SENSORS, MY_OBJECT_NAME, MY_FIRST_EVENT_NAME
 
-mqtt_client = None
 
-MY_OBJECT_NAME = "ChargeController"
-MY_FIRST_EVENT_NAME = "LowBatteryEvent"
+class SensorValue:
+    def __init__(self, key, value, timestamp):
+        self.key = key
+        self.value = value
+        self.timestamp = timestamp
 
-OPC_ENDPOINT = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
+    def format(self):
+        return json.dumps({
+            "key": self.key,
+            "value": self.value,
+            "timestamp": self.timestamp
+        })
 
-OPC_NAMESPACE = "http://examples.freeopcua.github.io"
 
-OPC_SENSORS = [
-    "panelVoltage",
-    "panelCurrent",
-    "batteryVoltage",
-    "batteryCurrent",
-    "loadVoltage",
-    "loadCurrent",
-    "inPower",
-    "outPower",
-    "batteryStatus",
-    "batteryCapacity",
-    "batteryTemperature",
-]
+class Reader(ABC):
+
+    @abstractmethod
+    def read(self) -> SensorValue:
+        pass
+
+
 
 subscribed_variables_dict = dict()
 subscribed_variables = list()
+
 
 # this dictionary contains the opc variables we want to to subscribe
 
@@ -49,6 +52,9 @@ class SubHandler(object):
     thread if you need to do such a thing
     """
 
+    def __init__(self, cb):
+        self.cb = cb
+
     def datachange_notification(self, node, val, data):
         var_name = get_variable_name_by_node(node)
         message = packOutputMessage(var_name, val)
@@ -57,7 +63,7 @@ class SubHandler(object):
             'value': message['data']['value'],
             'timestamp': int(datetime.datetime.now().timestamp())
         }
-        print(payload)
+        self.cb(payload)
 
     def event_notification(self, event):
         message = packOutputMessage('event', str(event.Message))
@@ -67,16 +73,19 @@ class SubHandler(object):
         # mqtt_client.publish(IIoT.MqttChannels.telemetry, json.dumps(message))
 
 
-class OpcUaClient(Thread):
+class OpcUaClient(Thread, Reader):
 
-    def __init__(self):
+    def __init__(self, cb):
         super().__init__()
         self.client = Client("opc.tcp://localhost:4840/freeopcua/server/")
-
+        self.on_data_change_callback = cb
 
     def init(self):
         self.client.connect()
         self.get_properties()
+
+    def set_on_data_change_callback(self, cb):
+        self.on_data_change_callback = cb
 
     def get_properties(self):
         root = self.client.get_root_node()
@@ -94,14 +103,18 @@ class OpcUaClient(Thread):
 
         for var in OPC_SENSORS:
             myvar = root.get_child(["0:Objects", "2:" + MY_OBJECT_NAME, "2:" + str(var)])
+            print(myvar)
             subscribed_variables.append(myvar)
             subscribed_variables_dict[str(myvar)] = str(myvar.get_browse_name().to_string())
 
         myevent = root.get_child(["0:Types", "0:EventTypes", "0:BaseEventType", "2:" + MY_FIRST_EVENT_NAME])
         print("MyFirstEventType is: ", myevent)
 
+    def start(self) -> None:
+        self.read()
+
     def read(self):
-        msclt = SubHandler()
+        msclt = SubHandler(self.on_data_change_callback)
         sub = self.client.create_subscription(100, msclt)
         for var in subscribed_variables:
             handle = sub.subscribe_data_change(var)

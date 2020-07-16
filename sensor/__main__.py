@@ -6,14 +6,6 @@ from sensor import reader
 from libs.utils import connector, IIoT
 
 
-def format(key, value, timestamp):
-    return json.dumps({
-        "key": key,
-        "value": value,
-        "timestamp": timestamp
-    })
-
-
 if __name__ == "__main__":
     topics = [IIoT.MqttChannels.sensors]  # canali a cui mi sottoscrivo
     mqtt_client = connector.MqttLocalClient('SENSORS', 'localhost', 1883, topics)
@@ -27,5 +19,5 @@ if __name__ == "__main__":
 
     while True:
         value = reader.read()
-        mqtt_client.publish(IIoT.MqttChannels.sensors, format(reader.key, value, int(datetime.now().timestamp())))
+        mqtt_client.publish(IIoT.MqttChannels.sensors, value.format())
         sleep(10)

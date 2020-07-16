@@ -5,9 +5,9 @@ import logging
 import time
 import random
 from opcua import ua, Server, uamethod
-import machineries.EpeverChargeController as cc
+import mock.machineries.EpeverChargeController as cc
 
-import common.MyCommons as Commons
+import mock.MyCommons as Commons
 
 
 DUMMY_DATA = True
@@ -153,7 +153,7 @@ def main():
             batteryTemperature.set_value(data['batteryTemperature'])
 
             if data['batteryVoltage'] < LOW_BATTERY_VOLTAGE and outputsEnabled:
-                outputsEnabled = False;
+                outputsEnabled = False
                 myEventGenerator.event.Message = ua.LocalizedText(
                     "Battery Voltage is too low. Outputs will be disconnected")
                 myEventGenerator.event.batteryVoltage = ua.Variant(float(data['panelVoltage']), ua.VariantType.Float)
