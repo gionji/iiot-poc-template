@@ -32,3 +32,15 @@ class DummyReader(Reader):
 
     def read(self) -> SensorValue:
         return SensorValue(self.key, randrange(10, 100), int(datetime.now().timestamp()))
+
+
+# Opc reader
+
+
+# Opc callback reader
+
+
+# Modbus reader
+
+
+# I2C Reader
