@@ -4,6 +4,8 @@ from time import sleep
 
 from libs.utils import connector, IIoT
 
+from telemetry import agent
+
 
 MY_DEVICE_ID         = ''
 MY_APP_ACCESS_KEY    = ''
@@ -23,7 +25,7 @@ class GenericValue:
         })
 
 
-def command_from_losant_callback(self, command):
+def command_from_agent_callback(self, command):
     print(command)
 
 
@@ -37,12 +39,12 @@ if __name__ == "__main__":
 
 
     ## Init the module core object
-    losant_client = LosantAgent(
+    losant_client = agent.LosantAgent(
                                   my_device_id         = MY_DEVICE_ID,
                                   my_app_access_key    = MY_APP_ACCESS_KEY,
                                   my_app_access_secret = MY_APP_ACCESS_SECRET,
                                 )
-    losant_client.set_callback( command_from_losant_callback )
+    losant_client.set_callback( command_from_agent_callback )
     losant_client.name = 'Losant Thread'
     losant_client.start()
 

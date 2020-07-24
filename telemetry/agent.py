@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import threading
+import losantmqtt as losant
 
 
 
@@ -24,20 +26,25 @@ class LosantAgent(TelemetryAgent, ABC, threading.Thread):
     def __init__( self, my_device_id, my_app_access_key, my_app_access_secret ):
         super().__init__()
         threading.Thread.__init__(self)
+
         self.my_device_id         = my_device_id
         self.my_app_access_key    = my_app_access_key
         self.my_app_access_secret = my_app_access_secret
 
         # Construct Losant device
-        self.device = Device( self.my_device_id,
+        self.device = losant.Device( self.my_device_id,
                         self.my_app_access_key,
                         self.my_app_access_secret)
+
+
+        print("Losant Device Set")
 
         self.callback = None
 
 
     def run( self ):
         # Connect to Losant and leave the connection open
+        print("Losant Device Start")
         self.device.add_event_observer("command", self.on_command)
         self.device.connect(blocking=True)
 
@@ -56,3 +63,4 @@ class LosantAgent(TelemetryAgent, ABC, threading.Thread):
 
     def set_callback(self, callback):
         self.callback = callback
+        print("Losant Callback set")

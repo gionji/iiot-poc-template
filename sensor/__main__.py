@@ -15,11 +15,11 @@ if __name__ == "__main__":
         IIoT.MqttChannels.sensors: 'sensors',
     }
 
-    reader = reader.DummyReader("S_1")
+    sensor1 = reader.DummyReader("S_1")
 
     while True:
-        value = reader.read()
+        readed_value = sensor1.read()
         # Publish the data
-        mqtt_client.publish(IIoT.MqttChannels.sensors, format(reader.key, value, int(datetime.now().timestamp())))
+        mqtt_client.publish(IIoT.MqttChannels.sensors, readed_value.format() )
 
         sleep(10)
